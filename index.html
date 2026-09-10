@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10253f">
+  <title>Een uitnodiging voor jou</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100svh; display: grid; place-items: center; background: radial-gradient(circle at top, #315b82 0, #10253f 56%, #091725 100%); color: #122033; overflow-x: hidden; }
+    main { width: min(100%, 34rem); padding: 1.5rem; text-align: center; }
+    .eyebrow { margin: 0 0 1.25rem; color: #d9e7f5; font-size: .9rem; letter-spacing: .12em; text-transform: uppercase; }
+    .scene { position: relative; min-height: 27rem; display: grid; place-items: center; perspective: 1100px; }
+    .envelope { position: relative; width: min(88vw, 28rem); height: 18rem; border: 0; padding: 0; background: transparent; cursor: pointer; filter: drop-shadow(0 1.4rem 1.5rem rgba(0,0,0,.28)); -webkit-tap-highlight-color: transparent; }
+    .back, .front { position: absolute; inset: 0; border-radius: .7rem; background: #d8e3ec; }
+    .front { z-index: 4; clip-path: polygon(0 20%, 50% 64%, 100% 20%, 100% 100%, 0 100%); background: linear-gradient(150deg, #e9f0f5, #c8d6e2); }
+    .front::after { content: ""; position: absolute; inset: 20% 0 0; background: linear-gradient(30deg, transparent 49.4%, rgba(95,119,140,.18) 50%, transparent 50.6%); }
+    .flap { position: absolute; z-index: 5; inset: 0; transform-origin: top; transition: transform .75s cubic-bezier(.2,.7,.2,1), z-index 0s .35s; clip-path: polygon(0 0, 100% 0, 50% 62%); border-radius: .7rem; background: linear-gradient(165deg, #f4f7fa, #cfdae4); backface-visibility: hidden; }
+    .seal { position: absolute; z-index: 7; left: 50%; top: 54%; translate: -50% -50%; width: 4rem; height: 4rem; display: grid; place-items: center; border-radius: 50%; color: white; font: 700 1.25rem Georgia, serif; background: #b34b42; box-shadow: 0 .3rem .7rem rgba(91,27,21,.3); transition: opacity .2s .22s, transform .35s; }
+    .card { position: absolute; z-index: 3; left: 6%; right: 6%; bottom: 1rem; min-height: 20rem; padding: 2rem 1.5rem; display: flex; flex-direction: column; justify-content: center; border-radius: .5rem; background: #fffdf8; box-shadow: 0 .8rem 1.5rem rgba(16,37,63,.22); transform: translateY(4rem); transition: transform .9s .38s cubic-bezier(.2,.8,.2,1); }
+    .icon { font-size: 2rem; margin-bottom: .5rem; }
+    h1 { margin: 0; font: 700 clamp(1.8rem, 7vw, 2.6rem)/1.1 Georgia, serif; color: #173b5e; }
+    .greeting { margin: .8rem 0 0; font-size: 1.05rem; }
+    .details { margin: 1.2rem 0 0; font-weight: 700; color: #9c3f38; }
+    .note { margin: .65rem auto 0; max-width: 22rem; line-height: 1.55; color: #4c5865; }
+    .hint { margin: 1rem 0 0; color: #d9e7f5; font-size: .95rem; transition: opacity .2s; }
+    .open .flap { z-index: 2; transform: rotateX(180deg); transition: transform .75s cubic-bezier(.2,.7,.2,1), z-index 0s .35s; }
+    .open .card { z-index: 6; transform: translateY(-9.2rem); }
+    .open .seal { opacity: 0; transform: scale(.7); }
+    .open + .hint { opacity: 0; }
+    .error { display: none; padding: 2rem; border-radius: 1rem; background: white; box-shadow: 0 1rem 2rem rgba(0,0,0,.2); }
+    .error h1 { font-size: 1.8rem; }
+    @media (max-width: 420px) { .scene { min-height: 25rem; } .envelope { height: 15.5rem; } .card { min-height: 18rem; padding: 1.5rem 1rem; } .open .card { transform: translateY(-8rem); } }
+    @media (prefers-reduced-motion: reduce) { .flap, .card, .seal { transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <main>
+    <section id="invitation">
+      <p class="eyebrow">Er ligt iets voor je klaar</p>
+      <div class="scene">
+        <button class="envelope" id="envelope" type="button" aria-label="Open je uitnodiging" aria-expanded="false">
+          <span class="back"></span>
+          <article class="card" aria-live="polite">
+            <span class="icon" id="icon" aria-hidden="true"></span>
+            <h1 id="title"></h1>
+            <p class="greeting" id="greeting"></p>
+            <p class="details" id="details"></p>
+            <p class="note" id="note"></p>
+          </article>
+          <span class="front"></span>
+          <span class="flap"></span>
+          <span class="seal" id="seal">A</span>
+        </button>
+        <p class="hint">Tik op de envelop</p>
+      </div>
+    </section>
+    <section class="error" id="error">
+      <h1>Deze uitnodiging is niet gevonden</h1>
+      <p>Controleer of je de volledige link hebt geopend.</p>
+    </section>
+  </main>
+  <script>
+    const invitations = {
+      A: { icon: "🍽️", title: "Samen dineren", greeting: "Lieve A, kom je ook?", details: "11 september", note: "Je bent van harte uitgenodigd voor een gezellig diner." },
+      B: { icon: "☕", title: "Kopje koffie?", greeting: "Beste B. See ya", details: "12 september", note: "Lijkt het je leuk om samen een kopje koffie te drinken?" },
+      C: { icon: "🎬", title: "Naar de bioscoop", greeting: "Hola C, vamos", details: "14 september", note: "Je bent uitgenodigd voor een gezellige avond in de bioscoop." }
+    };
+    const code = new URLSearchParams(location.search).get("code")?.toUpperCase() || "A";
+    const data = invitations[code];
+    if (!data) {
+      document.querySelector("#invitation").style.display = "none";
+      document.querySelector("#error").style.display = "block";
+    } else {
+      document.title = `${data.title} – uitnodiging voor ${code}`;
+      document.querySelector("#icon").textContent = data.icon;
+      document.querySelector("#title").textContent = data.title;
+      document.querySelector("#greeting").textContent = data.greeting;
+      document.querySelector("#details").textContent = data.details;
+      document.querySelector("#note").textContent = data.note;
+      document.querySelector("#seal").textContent = code;
+      const envelope = document.querySelector("#envelope");
+      envelope.addEventListener("click", () => {
+        const isOpen = envelope.classList.toggle("open");
+        envelope.setAttribute("aria-expanded", String(isOpen));
+        envelope.setAttribute("aria-label", isOpen ? "Sluit je uitnodiging" : "Open je uitnodiging");
+      });
+    }
+  </script>
+</body>
+</html>
